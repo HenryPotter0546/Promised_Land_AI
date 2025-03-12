@@ -1,2 +1,2 @@
-# Promised_Land_AI
-An Interaction Fiction Demo Powered AI Dungeon
+# The Promised Land ——应许之地
+An Interaction Adventure Game Powered Deepseek
