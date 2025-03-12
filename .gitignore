@@ -2,3 +2,4 @@ __pycache__
 readme.md
 requirements.txt
 .env
+game_data.db

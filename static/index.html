@@ -93,6 +93,43 @@
             overflow-y: auto;
         }
         
+        /* 玩家状态区域 */
+        #player-status-container {
+            margin-top: 15px;
+            background-color: #e8f5e9;
+            border-radius: 4px;
+            padding: 15px;
+        }
+        
+        .player-status {
+            font-size: 14px;
+        }
+        
+        .player-status h3 {
+            margin-top: 0;
+            color: #2e7d32;
+        }
+        
+        .status-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+        
+        .attributes, .weapons, .talents {
+            margin-top: 10px;
+        }
+        
+        .attributes h4, .weapons h4, .talents h4 {
+            margin: 5px 0;
+            color: #1565c0;
+        }
+        
+        .attributes ul, .weapons ul, .talents ul {
+            margin: 5px 0;
+            padding-left: 20px;
+        }
+        
         /* 输入区域 */
         #input-container {
             display: flex;
@@ -164,6 +201,14 @@
                 <div id="input-container">
                     <input id="input" type="text" placeholder="描述你的行动...">
                 </div>
+                
+                <!-- 玩家状态区域 -->
+                <div id="player-status-container">
+                    <h3>角色状态</h3>
+                    <div id="player-status">
+                        <!-- 玩家状态将动态添加 -->
+                    </div>
+                </div>
             </div>
             
             <!-- 世界信息区域 -->
@@ -179,6 +224,7 @@
         const personalStoryDiv = document.getElementById("personal-story");
         const worldInfoDiv = document.getElementById("world-info");
         const playerListEl = document.getElementById("player-list");
+        const playerStatusEl = document.getElementById("player-status");
         const inputEl = document.getElementById("input");
         const roomIdEl = document.getElementById("room-id");
         const playerCountEl = document.getElementById("player-count");
@@ -216,6 +262,11 @@
                     `${players[playerId]} (你)` : players[playerId];
                 playerListEl.appendChild(li);
             });
+        }
+        
+        // 更新玩家状态
+        function updatePlayerStatus(html) {
+            playerStatusEl.innerHTML = html;
         }
 
         ws.onopen = () => {
@@ -273,6 +324,10 @@
                     // 系统消息显示在世界信息中
                     addWorldMessage(data.content, "system");
                 }
+                else if (data.type === "player_status") {
+                    // 更新玩家状态
+                    updatePlayerStatus(data.content);
+                }
             } catch (e) {
                 // 如果不是JSON格式，作为AI响应处理
                 addPersonalMessage(event.data, "ai");
@@ -298,65 +353,4 @@
 </html>
 
 
-<!-- <!DOCTYPE html>
- 
-<html>
- 
-    <head>
- 
-        <title>Chat</title>
- 
-    </head>
- 
-    <body>
- 
-        <h1>WebSocket 聊天</h1>
- 
-        <form action="" onsubmit="sendMessage(event)">
- 
-            <input type="text" id="messageText" autocomplete="off"/>
- 
-            <button>Send</button>
- 
-        </form>
- 
-        <ul id='messages'>
- 
-        </ul>
- 
-        <script>
- 
-            var ws = new WebSocket("ws://localhost:8000/ws");
- 
-            ws.onmessage = function(event) {
- 
-                var messages = document.getElementById('messages')
- 
-                var message = document.createElement('li')
- 
-                var content = document.createTextNode(event.data)
- 
-                message.appendChild(content)
- 
-                messages.appendChild(message)
- 
-            };
- 
-            function sendMessage(event) {
- 
-                var input = document.getElementById("messageText")
- 
-                ws.send(input.value)
- 
-                input.value = ''
- 
-                event.preventDefault()
- 
-            }
-</script>
- 
-    </body>
-
-</html> -->
- 
 
