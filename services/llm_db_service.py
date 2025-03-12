@@ -28,12 +28,18 @@ class LLMDatabaseService:
         
         # 调用AI服务获取响应
         ai_response = await ai_service.generate_response(stage_hint,context, prompt)
+
+        print(f"before parse ai_response: {ai_response}")
         
         # 解析AI响应中的数据库操作指令
         updated_data = self._parse_db_operations(ai_response, player_id)
+
+        print(f"after parse ai_response: {ai_response}")
         
         # 清理AI响应，移除数据库操作指令
         cleaned_response = self._clean_response(ai_response)
+
+        print(f"cleaned_response: {cleaned_response}")
         
         return cleaned_response, updated_data
     

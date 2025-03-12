@@ -69,6 +69,9 @@ class AIService:
                     raise Exception(f"AI API调用失败: {error_text}")
                 
                 data = await response.json()
+
+                #返回的token数
+                print(f"返回的token数: ",data.get("usage", {}))
                 return data["choices"][0]["message"]["content"]
             
 
