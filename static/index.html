@@ -79,7 +79,6 @@
         /* 世界信息区域 */
         #world-info-container {
             flex: 1;
-            max-height: 300px;
             display: flex;
             flex-direction: column;
         }
@@ -91,6 +90,29 @@
             padding: 15px;
             background-color: #fff8e1;
             overflow-y: auto;
+            margin-bottom: 15px;
+        }
+        
+        /* 游戏地图区域 */
+        #game-map-container {
+            height: 250px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            padding: 15px;
+            background-color: #263238;
+            color: #b2ff59;
+            font-family: 'Courier New', monospace;
+            overflow: auto;
+            white-space: pre;
+            font-size: 14px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        #game-map {
+            display: inline-block;
+            text-align: center;
         }
         
         /* 玩家状态区域 */
@@ -211,10 +233,17 @@
                 </div>
             </div>
             
-            <!-- 世界信息区域 -->
+            <!-- 右侧区域 -->
             <div id="world-info-container">
                 <h3>世界信息</h3>
                 <div id="world-info"></div>
+                
+                <!-- 游戏地图区域 -->
+                <h3>冒险地图</h3>
+                <div id="game-map-container">
+                    <!-- ASCII地图将动态添加 -->
+                    <div id="game-map">加载地图中...</div>
+                </div>
             </div>
         </div>
     </div>
@@ -225,6 +254,7 @@
         const worldInfoDiv = document.getElementById("world-info");
         const playerListEl = document.getElementById("player-list");
         const playerStatusEl = document.getElementById("player-status");
+        const gameMapEl = document.getElementById("game-map");
         const inputEl = document.getElementById("input");
         const roomIdEl = document.getElementById("room-id");
         const playerCountEl = document.getElementById("player-count");
@@ -267,6 +297,11 @@
         // 更新玩家状态
         function updatePlayerStatus(html) {
             playerStatusEl.innerHTML = html;
+        }
+        
+        // 更新游戏地图
+        function updateGameMap(mapData) {
+            gameMapEl.textContent = mapData;
         }
 
         ws.onopen = () => {
@@ -327,6 +362,10 @@
                 else if (data.type === "player_status") {
                     // 更新玩家状态
                     updatePlayerStatus(data.content);
+                }
+                else if (data.type === "game_map") {
+                    // 更新游戏地图
+                    updateGameMap(data.content);
                 }
             } catch (e) {
                 // 如果不是JSON格式，作为AI响应处理

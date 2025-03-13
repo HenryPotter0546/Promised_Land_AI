@@ -3,6 +3,7 @@ import re
 from typing import Dict, List, Any, Optional, Tuple
 from services.db_service import db_service
 from services.ai_service import ai_service
+from services.map_service import map_service
 
 class LLMDatabaseService:
     def __init__(self):
@@ -13,7 +14,8 @@ class LLMDatabaseService:
             stage_hint: str, 
             player_id: str, 
             user_action: str, 
-            context: str
+            context: str,
+            room_id: str
             ) -> Tuple[str, Dict]:
         """处理LLM动作，包括读写数据库"""
         # 获取玩家信息
@@ -24,15 +26,18 @@ class LLMDatabaseService:
             player_data = self.db.create_player(player_id, player_name)
         
         # 构建提示，包含玩家状态和天赋信息
-        prompt = self._build_prompt(player_data, user_action, context)
+        prompt = self._build_prompt(player_data, user_action, context, room_id, stage_hint)
         
         # 调用AI服务获取响应
-        ai_response = await ai_service.generate_response(stage_hint,context, prompt)
+        ai_response = await ai_service.generate_response(stage_hint, context, prompt)
 
         print(f"before parse ai_response: {ai_response}")
         
         # 解析AI响应中的数据库操作指令
         updated_data = self._parse_db_operations(ai_response, player_id)
+
+        # 解析AI响应中的地图更新指令
+        self._parse_map_operations(ai_response, room_id)
 
         print(f"after parse ai_response: {ai_response}")
         
@@ -43,7 +48,7 @@ class LLMDatabaseService:
         
         return cleaned_response, updated_data
     
-    def _build_prompt(self, player_data: Dict, user_action: str, context: str) -> str:
+    def _build_prompt(self, player_data: Dict, user_action: str, context: str, room_id: str, stage_hint: str) -> str:
         """构建包含玩家数据的提示"""
         # 提取玩家基本信息
         player_info = {
@@ -83,9 +88,15 @@ class LLMDatabaseService:
                 "rarity": talent["rarity"]
             })
         
+        # 获取当前地图
+        current_map = map_service.get_map_for_room(room_id)
+        
         # 构建提示
         prompt = f"""
 你是一个文字冒险游戏的AI主持人。你需要根据玩家的行动生成生动的描述和结果。
+
+当前游戏阶段:
+{stage_hint}
 
 当前玩家信息:
 ```
@@ -105,6 +116,11 @@ class LLMDatabaseService:
 当前场景:
 {context}
 
+当前地图:
+```
+{current_map}
+```
+
 玩家行动:
 {user_action}
 
@@ -113,9 +129,34 @@ class LLMDatabaseService:
 [DB:UPDATE_WEAPON] {{武器ID}} {{更新的武器数据JSON}} [/DB]
 [DB:ADD_WEAPON] {{武器ID}} {{武器耐久度}} [/DB]
 
+如果需要更新地图，请使用以下格式:
+[MAP:UPDATE]
+  北
+  ↑
+[位置A]═══路径═══[位置B🔴]
+  ║           ║
+  ║      支路-╫-支路
+  ║           ║
+[位置C]      [位置D]
+  ║           ║
+  ║══路径══[位置E]
+[/MAP]
+
 例如:
 [DB:UPDATE_PLAYER] {{"health": 90, "gold": 60}} [/DB]
 [DB:UPDATE_WEAPON] weapon_001 {{"current_durability": 45, "is_equipped": 1}} [/DB]
+
+[MAP:UPDATE]
+  北
+  ↑
+[洞穴入口]═══通道═══[陷阱🔴]
+  ║           ║
+  ║      岔路-╫-岔路
+  ║           ║
+[石壁]      [尸骨]
+  ║           ║
+  ║══通道══[迷宫入口]
+[/MAP]
 
 请注意:
 1. 只有在合理的情况下才修改数据
@@ -123,6 +164,8 @@ class LLMDatabaseService:
 3. 如果玩家受伤，减少生命值
 4. 如果玩家获得物品，增加相应的物品
 5. 不要在响应中包含数据库操作的指令，这些指令会被自动处理
+6. 地图应该反映当前场景，使用ASCII字符绘制
+7. 使用🔴标记玩家当前位置
 
 AI响应:
 """
@@ -164,12 +207,25 @@ AI响应:
         
         return updated_data
     
+    def _parse_map_operations(self, response: str, room_id: str):
+        """解析AI响应中的地图更新指令"""
+        # 解析地图更新指令
+        map_updates = re.findall(r'\[MAP:UPDATE\](.*?)\[/MAP\]', response, re.DOTALL)
+        if map_updates:
+            # 使用最后一个地图更新
+            new_map = map_updates[-1].strip()
+            if new_map:
+                map_service.update_map(room_id, new_map)
+    
     def _clean_response(self, response: str) -> str:
         """清理AI响应，移除数据库操作指令"""
         # 移除所有数据库操作指令
         cleaned = re.sub(r'\[DB:UPDATE_PLAYER\].*?\[/DB\]', '', response, flags=re.DOTALL)
         cleaned = re.sub(r'\[DB:UPDATE_WEAPON\].*?\[/DB\]', '', cleaned, flags=re.DOTALL)
         cleaned = re.sub(r'\[DB:ADD_WEAPON\].*?\[/DB\]', '', cleaned, flags=re.DOTALL)
+        
+        # 移除所有地图更新指令
+        cleaned = re.sub(r'\[MAP:UPDATE\].*?\[/MAP\]', '', cleaned, flags=re.DOTALL)
         
         # 移除多余的空行
         cleaned = re.sub(r'\n{3,}', '\n\n', cleaned)
@@ -233,6 +289,10 @@ AI响应:
         """
         
         return html
+    
+    def get_game_map(self, room_id: str) -> str:
+        """获取游戏地图"""
+        return map_service.get_map_for_room(room_id)
 
 # 全局LLM数据库服务实例
 llm_db_service = LLMDatabaseService() 

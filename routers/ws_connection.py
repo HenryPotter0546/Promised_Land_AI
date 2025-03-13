@@ -4,6 +4,7 @@ from fastapi import WebSocket, WebSocketDisconnect
 from services.room_manager import room_manager
 from services.ai_service import ai_service
 from services.llm_db_service import llm_db_service
+from services.map_service import map_service
 import logging
 logger = logging.getLogger(__name__)
 
@@ -37,6 +38,18 @@ async def handle_websocket(websocket: WebSocket):
         await websocket.send_json({
             "type": "ai_response",
             "content": room.game_state["current_scene"]
+        })
+        
+        # 初始化并发送游戏地图
+        current_stage = room.game_state["current_stage"]
+        # 如果房间没有地图，根据当前阶段初始化
+        if room.room_id not in map_service.room_maps:
+            map_service.initialize_room_map(room.room_id, current_stage)
+        
+        game_map = map_service.get_map_for_room(room.room_id)
+        await websocket.send_json({
+            "type": "game_map",
+            "content": game_map
         })
         
         # 广播新玩家加入消息
@@ -73,15 +86,28 @@ async def handle_websocket(websocket: WebSocket):
                             stage_hint=hint,
                             player_id=player_id,
                             user_action=message["content"],
-                            context=room.game_state["current_scene"]
+                            context=room.game_state["current_scene"],
+                            room_id=room.room_id
                         )
                         logger.debug(f"LLM response: {ai_response}")
                         
                         # 更新游戏状态
                         # todo: 如何识别到没到达下一步
+                        old_stage = room.game_state["current_stage"]
                         should_goto_next_stage = random.choice([True, False])
                         if should_goto_next_stage:
-                            room.game_state["current_stage"] += 1
+                            room.game_state["current_stage"] = min(room.game_state["current_stage"] + 1, room.stage_cnt)
+                        
+                        # 如果游戏阶段变化，更新地图
+                        if old_stage != room.game_state["current_stage"]:
+                            map_service.initialize_room_map(room.room_id, room.game_state["current_stage"])
+                            # 广播更新后的地图
+                            game_map = map_service.get_map_for_room(room.room_id)
+                            await room.broadcast({
+                                "type": "game_map",
+                                "content": game_map
+                            })
+                        
                         room.game_state["current_scene"] = ai_response
                         room.game_state["story"].append({
                             "action": message["content"],
@@ -101,6 +127,14 @@ async def handle_websocket(websocket: WebSocket):
                                 "type": "player_status",
                                 "content": player_status_html
                             })
+                        
+                        # 发送更新后的游戏地图
+                        game_map = llm_db_service.get_game_map(room.room_id)
+                        await room.broadcast({
+                            "type": "game_map",
+                            "content": game_map
+                        })
+                        
                 except json.JSONDecodeError as e:
                     logger.error(f"JSON解析失败: {e}, 原始数据: {data}")
                     await websocket.send_json({"type": "error", "content": "无效的JSON格式"})
