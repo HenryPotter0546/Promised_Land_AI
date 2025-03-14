@@ -1,5 +1,11 @@
-/* 云雾效果 */
-.cloud-fog {
+/**
+ * 游戏地图迷雾效果样式
+ * 这个文件包含所有与游戏地图迷雾效果相关的样式
+ * 所有样式都限定在#game-map-container选择器内，确保只影响地图区域
+ */
+
+/* 确保所有迷雾效果样式都在game-map-container内 */
+#game-map-container .cloud-fog {
     position: absolute;
     top: 0;
     left: 0;
@@ -11,7 +17,7 @@
     background-color: rgba(20, 20, 40, 0.3);
 }
 
-.cloud {
+#game-map-container .cloud {
     position: absolute;
     background-color: rgba(220, 220, 255, 0.8);
     border-radius: 50%;
@@ -26,7 +32,7 @@
 }
 
 /* 简化的动态迷雾效果 */
-.map-container {
+#game-map-container .map-container {
     position: absolute;
     top: 0;
     left: 0;
@@ -37,7 +43,7 @@
     overflow: hidden;
 }
 
-.map-title {
+#game-map-container .map-title {
     text-align: center;
     margin-bottom: 10px;
     color: #b2ff59;
@@ -46,7 +52,7 @@
     z-index: 3;
 }
 
-.map-content {
+#game-map-container .map-content {
     position: relative;
     width: 100%;
     height: calc(100% - 30px);
@@ -55,7 +61,7 @@
     align-items: center;
 }
 
-.map-message {
+#game-map-container .map-message {
     color: rgba(178, 255, 89, 0.7);
     font-size: 24px;
     text-shadow: 0 0 10px rgba(178, 255, 89, 0.5);
@@ -64,7 +70,7 @@
 }
 
 /* 旧的迷雾效果 - 保留兼容性 */
-.fog {
+#game-map-container .fog {
     position: absolute;
     top: 0;
     left: 0;

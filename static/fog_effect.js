@@ -1,6 +1,7 @@
 /**
  * 迷雾效果模块
  * 处理游戏中的迷雾和云雾效果
+ * 所有样式都限定在#game-map-container选择器内，确保只影响地图区域
  */
 
 // 迷雾效果配置
@@ -32,7 +33,7 @@ function createClouds(container) {
     // 创建多个云朵元素
     for (let i = 0; i < FogConfig.cloudCount; i++) {
         const cloud = document.createElement('div');
-        cloud.className = 'cloud';
+        cloud.className = 'cloud';  // CSS选择器会自动匹配#game-map-container .cloud
         
         // 随机大小，根据容器尺寸调整
         const maxSize = Math.min(containerWidth, containerHeight) * 0.6;
@@ -65,7 +66,7 @@ function createClouds(container) {
 function createFogMapContainer(mapType = "cloud") {
     // 创建地图容器，确保填满整个父容器
     const mapContainer = document.createElement("div");
-    mapContainer.className = "map-container";
+    mapContainer.className = "map-container";  // CSS选择器会自动匹配#game-map-container .map-container
     mapContainer.style.width = "100%";
     mapContainer.style.height = "100%";
     mapContainer.style.position = "absolute";
@@ -74,16 +75,16 @@ function createFogMapContainer(mapType = "cloud") {
     
     // 添加标题
     const titleDiv = document.createElement("div");
-    titleDiv.className = "map-title";
+    titleDiv.className = "map-title";  // CSS选择器会自动匹配#game-map-container .map-title
     titleDiv.textContent = "北\n↑";
     mapContainer.appendChild(titleDiv);
     
     // 添加内容
     const contentDiv = document.createElement("div");
-    contentDiv.className = "map-content";
+    contentDiv.className = "map-content";  // CSS选择器会自动匹配#game-map-container .map-content
     
     const messageDiv = document.createElement("div");
-    messageDiv.className = "map-message";
+    messageDiv.className = "map-message";  // CSS选择器会自动匹配#game-map-container .map-message
     messageDiv.textContent = "【迷雾笼罩】";
     contentDiv.appendChild(messageDiv);
     
@@ -93,7 +94,7 @@ function createFogMapContainer(mapType = "cloud") {
     if (mapType === "cloud") {
         // 添加云雾容器，确保完全覆盖
         const cloudFogDiv = document.createElement("div");
-        cloudFogDiv.className = "cloud-fog";
+        cloudFogDiv.className = "cloud-fog";  // CSS选择器会自动匹配#game-map-container .cloud-fog
         cloudFogDiv.id = "cloud-fog-container";
         cloudFogDiv.style.width = "100%";
         cloudFogDiv.style.height = "100%";
@@ -107,7 +108,7 @@ function createFogMapContainer(mapType = "cloud") {
     } else {
         // 使用旧的迷雾效果，确保完全覆盖
         const fogDiv = document.createElement("div");
-        fogDiv.className = "fog";
+        fogDiv.className = "fog";  // CSS选择器会自动匹配#game-map-container .fog
         fogDiv.style.width = "100%";
         fogDiv.style.height = "100%";
         fogDiv.style.position = "absolute";
@@ -134,6 +135,18 @@ function renderFogMap(targetElement) {
     // 添加到目标元素
     targetElement.appendChild(mapContainer);
 }
+
+/**
+ * 初始化迷雾效果模块
+ * 在页面加载完成后自动调用
+ */
+function initFogEffect() {
+    console.log("迷雾效果模块初始化完成");
+    // 可以在这里添加初始化代码
+}
+
+// 当页面加载完成后初始化
+document.addEventListener('DOMContentLoaded', initFogEffect);
 
 // 导出模块
 window.FogEffect = {
