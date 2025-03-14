@@ -40,13 +40,10 @@ async def handle_websocket(websocket: WebSocket):
             "content": room.game_state["current_scene"]
         })
         
-        # 初始化并发送游戏地图
+        # 获取并发送当前阶段的游戏地图
         current_stage = room.game_state["current_stage"]
-        # 如果房间没有地图，根据当前阶段初始化
-        if room.room_id not in map_service.room_maps:
-            map_service.initialize_room_map(room.room_id, current_stage)
-        
         game_map = map_service.get_map_for_room(room.room_id)
+        print(f"发送地图数据: {game_map}")
         await websocket.send_json({
             "type": "game_map",
             "content": game_map
@@ -98,10 +95,8 @@ async def handle_websocket(websocket: WebSocket):
                         if should_goto_next_stage:
                             room.game_state["current_stage"] = min(room.game_state["current_stage"] + 1, room.stage_cnt)
                         
-                        # 如果游戏阶段变化，更新地图
+                        # 如果游戏阶段变化，广播更新后的地图
                         if old_stage != room.game_state["current_stage"]:
-                            map_service.initialize_room_map(room.room_id, room.game_state["current_stage"])
-                            # 广播更新后的地图
                             game_map = map_service.get_map_for_room(room.room_id)
                             await room.broadcast({
                                 "type": "game_map",

@@ -1,200 +1,11 @@
 <!DOCTYPE html>
-<html>
+<html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <title>The Promised Land</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-            background-color: #f0f0f0;
-            display: flex;
-            height: 100vh;
-        }
-        
-        /* 左侧玩家列表 */
-        #player-list-container {
-            width: 200px;
-            background-color: #2c3e50;
-            color: white;
-            padding: 15px;
-            box-shadow: 2px 0 5px rgba(0,0,0,0.1);
-            overflow-y: auto;
-        }
-        
-        #player-list {
-            list-style-type: none;
-            padding: 0;
-        }
-        
-        .player-item {
-            padding: 8px 10px;
-            margin-bottom: 5px;
-            border-radius: 4px;
-            background-color: #34495e;
-        }
-        
-        /* 主游戏区域 */
-        #main-container {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            padding: 15px;
-            position: relative;
-        }
-        
-        /* 房间信息 */
-        #room-info {
-            background-color: #ede7f6;
-            border-radius: 4px;
-            padding: 10px;
-            margin-bottom: 15px;
-        }
-        
-        /* 游戏内容区域 */
-        #game-content {
-            display: flex;
-            flex: 1;
-            gap: 15px;
-        }
-        
-        /* 个人剧情区域 */
-        #personal-story-container {
-            flex: 2;
-            display: flex;
-            flex-direction: column;
-        }
-        
-        #personal-story {
-            flex: 1;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            padding: 15px;
-            background-color: #fff;
-            overflow-y: auto;
-            margin-bottom: 10px;
-        }
-        
-        /* 世界信息区域 */
-        #world-info-container {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-        }
-        
-        #world-info {
-            flex: 1;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            padding: 15px;
-            background-color: #fff8e1;
-            overflow-y: auto;
-            margin-bottom: 15px;
-        }
-        
-        /* 游戏地图区域 */
-        #game-map-container {
-            height: 250px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            padding: 15px;
-            background-color: #263238;
-            color: #b2ff59;
-            font-family: 'Courier New', monospace;
-            overflow: auto;
-            white-space: pre;
-            font-size: 14px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-        
-        #game-map {
-            display: inline-block;
-            text-align: center;
-        }
-        
-        /* 玩家状态区域 */
-        #player-status-container {
-            margin-top: 15px;
-            background-color: #e8f5e9;
-            border-radius: 4px;
-            padding: 15px;
-        }
-        
-        .player-status {
-            font-size: 14px;
-        }
-        
-        .player-status h3 {
-            margin-top: 0;
-            color: #2e7d32;
-        }
-        
-        .status-row {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 10px;
-        }
-        
-        .attributes, .weapons, .talents {
-            margin-top: 10px;
-        }
-        
-        .attributes h4, .weapons h4, .talents h4 {
-            margin: 5px 0;
-            color: #1565c0;
-        }
-        
-        .attributes ul, .weapons ul, .talents ul {
-            margin: 5px 0;
-            padding-left: 20px;
-        }
-        
-        /* 输入区域 */
-        #input-container {
-            display: flex;
-            gap: 10px;
-            margin-top: 10px;
-        }
-        
-        #input {
-            flex-grow: 1;
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            font-size: 16px;
-        }
-        
-        /* 消息样式 */
-        .message {
-            margin: 8px 0;
-            padding: 8px;
-            border-radius: 4px;
-        }
-        
-        .system-message {
-            background-color: #e8f5e9;
-            color: #2e7d32;
-        }
-        
-        .user-message {
-            background-color: #e3f2fd;
-            color: #1565c0;
-        }
-        
-        .ai-message {
-            background-color: #fff3e0;
-            color: #e65100;
-        }
-        
-        .world-message {
-            background-color: #f3e5f5;
-            color: #6a1b9a;
-            font-style: italic;
-        }
-    </style>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Promised Land - 应许之地</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="fog_effect.css">
 </head>
 <body>
     <!-- 左侧玩家列表 -->
@@ -219,7 +30,7 @@
             <!-- 个人剧情区域 -->
             <div id="personal-story-container">
                 <h3>你的冒险</h3>
-                <div id="personal-story"></div>
+                <div id="personal-story" class="story-content"></div>
                 <div id="input-container">
                     <input id="input" type="text" placeholder="描述你的行动...">
                 </div>
@@ -236,7 +47,7 @@
             <!-- 右侧区域 -->
             <div id="world-info-container">
                 <h3>世界信息</h3>
-                <div id="world-info"></div>
+                <div id="world-info" class="story-content"></div>
                 
                 <!-- 游戏地图区域 -->
                 <h3>冒险地图</h3>
@@ -248,146 +59,9 @@
         </div>
     </div>
     
-    <script>
-        const ws = new WebSocket(`ws://${location.host}/ws`);
-        const personalStoryDiv = document.getElementById("personal-story");
-        const worldInfoDiv = document.getElementById("world-info");
-        const playerListEl = document.getElementById("player-list");
-        const playerStatusEl = document.getElementById("player-status");
-        const gameMapEl = document.getElementById("game-map");
-        const inputEl = document.getElementById("input");
-        const roomIdEl = document.getElementById("room-id");
-        const playerCountEl = document.getElementById("player-count");
-        
-        // 当前玩家ID
-        let currentPlayerId = "";
-        // 所有玩家列表
-        let players = {};
-        
-        // 添加消息到个人剧情
-        function addPersonalMessage(text, type) {
-            const p = document.createElement("p");
-            p.textContent = text;
-            p.className = `message ${type}-message`;
-            personalStoryDiv.appendChild(p);
-            personalStoryDiv.scrollTop = personalStoryDiv.scrollHeight;
-        }
-        
-        // 添加消息到世界信息
-        function addWorldMessage(text, type) {
-            const p = document.createElement("p");
-            p.textContent = text;
-            p.className = `message ${type}-message`;
-            worldInfoDiv.appendChild(p);
-            worldInfoDiv.scrollTop = worldInfoDiv.scrollHeight;
-        }
-        
-        // 更新玩家列表
-        function updatePlayerList() {
-            playerListEl.innerHTML = "";
-            Object.keys(players).forEach(playerId => {
-                const li = document.createElement("li");
-                li.className = "player-item";
-                li.textContent = playerId === currentPlayerId ? 
-                    `${players[playerId]} (你)` : players[playerId];
-                playerListEl.appendChild(li);
-            });
-        }
-        
-        // 更新玩家状态
-        function updatePlayerStatus(html) {
-            playerStatusEl.innerHTML = html;
-        }
-        
-        // 更新游戏地图
-        function updateGameMap(mapData) {
-            gameMapEl.textContent = mapData;
-        }
-
-        ws.onopen = () => {
-            addPersonalMessage("连接成功！欢迎来到(The Promised Land)应许之地！", "system");
-        };
-        
-        ws.onmessage = (event) => {
-            try {
-                const data = JSON.parse(event.data);
-                
-                if (data.type === "room_info") {
-                    roomIdEl.textContent = `房间ID: ${data.room_id}`;
-                    playerCountEl.textContent = `在线玩家: ${data.player_count}`;
-                    
-                    // 如果收到房间信息，保存当前玩家ID
-                    if (data.player_id && !currentPlayerId) {
-                        currentPlayerId = data.player_id;
-                    }
-                    
-                    // 更新玩家列表
-                    if (data.players) {
-                        players = data.players;
-                        updatePlayerList();
-                    }
-                } 
-                else if (data.type === "player_joined") {
-                    // 新玩家加入
-                    players[data.player_id] = `玩家${data.player_id.substring(0, 6)}`;
-                    updatePlayerList();
-                    addWorldMessage(`${players[data.player_id]} 加入了游戏`, "system");
-                }
-                else if (data.type === "player_left") {
-                    // 玩家离开
-                    if (players[data.player_id]) {
-                        addWorldMessage(`${players[data.player_id]} 离开了游戏`, "system");
-                        delete players[data.player_id];
-                        updatePlayerList();
-                    }
-                }
-                else if (data.type === "ai_response") {
-                    // AI响应只显示在个人剧情中
-                    addPersonalMessage(data.content, "ai");
-                } 
-                else if (data.type === "user_action") {
-                    // 其他玩家的动作显示在世界信息中
-                    if (data.player_id !== currentPlayerId) {
-                        const playerName = players[data.player_id] || `玩家${data.player_id.substring(0, 6)}`;
-                        addWorldMessage(`${playerName}: ${data.content}`, "user");
-                    } else {
-                        // 自己的动作显示在个人剧情中
-                        addPersonalMessage(`你: ${data.content}`, "user");
-                    }
-                }
-                else if (data.type === "system") {
-                    // 系统消息显示在世界信息中
-                    addWorldMessage(data.content, "system");
-                }
-                else if (data.type === "player_status") {
-                    // 更新玩家状态
-                    updatePlayerStatus(data.content);
-                }
-                else if (data.type === "game_map") {
-                    // 更新游戏地图
-                    updateGameMap(data.content);
-                }
-            } catch (e) {
-                // 如果不是JSON格式，作为AI响应处理
-                addPersonalMessage(event.data, "ai");
-            }
-        };
-
-        ws.onclose = () => {
-            addPersonalMessage("连接已断开，请刷新页面重试", "system");
-        };
-
-        inputEl.addEventListener("keypress", (e) => {
-            if (e.key === "Enter" && inputEl.value.trim()) {
-                const message = inputEl.value.trim();
-                ws.send(JSON.stringify({
-                    type: "action",
-                    content: message
-                }));
-                inputEl.value = "";
-            }
-        });
-    </script>
+    <!-- 先加载迷雾效果模块，再加载主游戏脚本 -->
+    <script src="fog_effect.js"></script>
+    <script src="game.js"></script>
 </body>
 </html>
 

@@ -36,9 +36,6 @@ class LLMDatabaseService:
         # 解析AI响应中的数据库操作指令
         updated_data = self._parse_db_operations(ai_response, player_id)
 
-        # 解析AI响应中的地图更新指令
-        self._parse_map_operations(ai_response, room_id)
-
         print(f"after parse ai_response: {ai_response}")
         
         # 清理AI响应，移除数据库操作指令
@@ -129,34 +126,9 @@ class LLMDatabaseService:
 [DB:UPDATE_WEAPON] {{武器ID}} {{更新的武器数据JSON}} [/DB]
 [DB:ADD_WEAPON] {{武器ID}} {{武器耐久度}} [/DB]
 
-如果需要更新地图，请使用以下格式:
-[MAP:UPDATE]
-  北
-  ↑
-[位置A]═══路径═══[位置B🔴]
-  ║           ║
-  ║      支路-╫-支路
-  ║           ║
-[位置C]      [位置D]
-  ║           ║
-  ║══路径══[位置E]
-[/MAP]
-
 例如:
 [DB:UPDATE_PLAYER] {{"health": 90, "gold": 60}} [/DB]
 [DB:UPDATE_WEAPON] weapon_001 {{"current_durability": 45, "is_equipped": 1}} [/DB]
-
-[MAP:UPDATE]
-  北
-  ↑
-[洞穴入口]═══通道═══[陷阱🔴]
-  ║           ║
-  ║      岔路-╫-岔路
-  ║           ║
-[石壁]      [尸骨]
-  ║           ║
-  ║══通道══[迷宫入口]
-[/MAP]
 
 请注意:
 1. 只有在合理的情况下才修改数据
@@ -164,8 +136,7 @@ class LLMDatabaseService:
 3. 如果玩家受伤，减少生命值
 4. 如果玩家获得物品，增加相应的物品
 5. 不要在响应中包含数据库操作的指令，这些指令会被自动处理
-6. 地图应该反映当前场景，使用ASCII字符绘制
-7. 使用🔴标记玩家当前位置
+6. 地图是固定的，不需要也不能更新地图
 
 AI响应:
 """
@@ -207,16 +178,6 @@ AI响应:
         
         return updated_data
     
-    def _parse_map_operations(self, response: str, room_id: str):
-        """解析AI响应中的地图更新指令"""
-        # 解析地图更新指令
-        map_updates = re.findall(r'\[MAP:UPDATE\](.*?)\[/MAP\]', response, re.DOTALL)
-        if map_updates:
-            # 使用最后一个地图更新
-            new_map = map_updates[-1].strip()
-            if new_map:
-                map_service.update_map(room_id, new_map)
-    
     def _clean_response(self, response: str) -> str:
         """清理AI响应，移除数据库操作指令"""
         # 移除所有数据库操作指令
@@ -224,7 +185,7 @@ AI响应:
         cleaned = re.sub(r'\[DB:UPDATE_WEAPON\].*?\[/DB\]', '', cleaned, flags=re.DOTALL)
         cleaned = re.sub(r'\[DB:ADD_WEAPON\].*?\[/DB\]', '', cleaned, flags=re.DOTALL)
         
-        # 移除所有地图更新指令
+        # 移除所有地图更新指令（以防万一）
         cleaned = re.sub(r'\[MAP:UPDATE\].*?\[/MAP\]', '', cleaned, flags=re.DOTALL)
         
         # 移除多余的空行

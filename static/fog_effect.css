@@ -1,0 +1,89 @@
+/* 云雾效果 */
+.cloud-fog {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 2;
+    pointer-events: none;
+    overflow: hidden;
+    background-color: rgba(20, 20, 40, 0.3);
+}
+
+.cloud {
+    position: absolute;
+    background-color: rgba(220, 220, 255, 0.8);
+    border-radius: 50%;
+    filter: blur(15px);
+    box-shadow: 0 0 20px 5px rgba(255, 255, 255, 0.5);
+}
+
+@keyframes floatCloud {
+    0% { transform: translateX(-20%) translateY(0); }
+    50% { transform: translateX(20%) translateY(-10%); }
+    100% { transform: translateX(-20%) translateY(0); }
+}
+
+/* 简化的动态迷雾效果 */
+.map-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: #1a1a2e;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.map-title {
+    text-align: center;
+    margin-bottom: 10px;
+    color: #b2ff59;
+    font-weight: bold;
+    position: relative;
+    z-index: 3;
+}
+
+.map-content {
+    position: relative;
+    width: 100%;
+    height: calc(100% - 30px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.map-message {
+    color: rgba(178, 255, 89, 0.7);
+    font-size: 24px;
+    text-shadow: 0 0 10px rgba(178, 255, 89, 0.5);
+    z-index: 3;
+    position: relative;
+}
+
+/* 旧的迷雾效果 - 保留兼容性 */
+.fog {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(circle at 50% 50%, 
+        rgba(24, 24, 46, 0.1) 20%,
+        rgba(0, 0, 0, 0.8) 90%
+    );
+    background-size: 200% 200%;
+    animation: fogFlow 20s infinite linear;
+    pointer-events: none;
+    z-index: 2;
+}
+
+@keyframes fogFlow {
+    0% { background-position: 0% 0%; }
+    25% { background-position: 100% 0%; }
+    50% { background-position: 100% 100%; }
+    75% { background-position: 0% 100%; }
+    100% { background-position: 0% 0%; }
+} 

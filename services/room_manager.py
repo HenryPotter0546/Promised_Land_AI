@@ -3,6 +3,8 @@ from typing import Dict, Optional
 from fastapi import WebSocket
 import asyncio
 from config.settings import Settings
+from services.map_service import map_service
+from services.ai_service import ai_service
 
 settings = Settings()
 
@@ -28,6 +30,74 @@ class GameRoom:
             "current_scene": "你站在一个神秘洞穴的入口，周围是茂密的森林。洞穴深处传来微弱的光芒和神秘的声音。",
             "current_stage": 0
         }
+        
+        # 初始化房间的地图
+        asyncio.create_task(self._initialize_maps())
+    
+    async def _initialize_maps(self):
+        """初始化所有游戏阶段的地图"""
+        print(f"开始为房间 {self.room_id} 生成地图...")
+        # 为每个游戏阶段初始化地图
+        for stage in range(len(self.game_stage)):
+            # 获取阶段描述
+            stage_description = self.game_stage[stage]
+            
+            # 构建提示
+            prompt = f"""
+你是一个文字冒险游戏的地图设计师。请根据以下游戏阶段描述，创建一个ASCII地图。
+地图应该使用以下格式：
+
+  北
+  ↑
+🌳[宿舍楼🏠]━主路━[食堂🍜]🌳
+  ┃           ┃
+  ┃      支路┅╋┅支路
+  ┃           ┃
+🗿[小路]    [小卖部🔴]
+  ┃           ┃
+  ┃━支路━━[实验室⚗️]━主路━▶出口
+  ━━━━━小路━━━━━━━━┛
+
+游戏阶段描述：{stage_description}
+
+请注意：
+1. 使用方括号[]表示地点
+2. 使用═、║、╫等符号表示路径和连接
+3. 使用🔴标记玩家当前位置
+4. 地图应该反映游戏阶段的场景和环境
+5. 只返回ASCII地图，不要有其他解释
+
+ASCII地图：
+"""
+            
+            # 调用AI服务生成地图
+            try:
+                generated_map = await ai_service.generate_response(f"生成游戏地图-阶段{stage}", stage_description, prompt)
+                print(f"为阶段 {stage} 生成的地图: {generated_map}")
+                
+                # 清理生成的地图（移除可能的前缀和后缀）
+                generated_map = self._clean_generated_map(generated_map)
+                
+                # 保存生成的地图
+                map_service.update_map_for_stage(self.room_id, stage, generated_map)
+                print(f"为阶段 {stage} 生成地图成功")
+            except Exception as e:
+                print(f"为阶段 {stage} 生成地图失败: {e}")
+                # 使用默认地图
+                map_service.initialize_room_map(self.room_id, stage)
+    
+    def _clean_generated_map(self, map_text: str) -> str:
+        """清理生成的地图文本，移除可能的前缀和后缀"""
+        # 移除可能的"ASCII地图："前缀
+        map_text = map_text.replace("ASCII地图：", "")
+        
+        # 移除可能的代码块标记
+        map_text = map_text.replace("```", "")
+        
+        # 移除开头和结尾的空行
+        map_text = map_text.strip()
+        
+        return map_text
 
     async def connect(self, websocket: WebSocket) -> str:
         """添加新玩家到房间"""
