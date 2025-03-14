@@ -50,6 +50,7 @@
     font-weight: bold;
     position: relative;
     z-index: 3;
+    padding-top: 5px;
 }
 
 #game-map-container .map-content {
@@ -92,4 +93,11 @@
     50% { background-position: 100% 100%; }
     75% { background-position: 0% 100%; }
     100% { background-position: 0% 0%; }
+}
+
+/* 确保game-map元素占满整个容器 */
+#game-map {
+    position: relative;
+    width: 100% !important;
+    height: 100% !important;
 } 

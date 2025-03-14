@@ -128,12 +128,34 @@ function renderFogMap(targetElement) {
     // 清空目标元素
     targetElement.innerHTML = "";
     
+    // 获取父容器（game-map-container）
+    const parentContainer = targetElement.closest('#game-map-container');
+    
+    // 如果找不到父容器，直接使用目标元素
+    const containerToUse = parentContainer || targetElement;
+    
     // 创建迷雾地图容器
     const mapType = FogConfig.useCloudFogEffect ? "cloud" : "gradient";
     const mapContainer = createFogMapContainer(mapType);
     
     // 添加到目标元素
     targetElement.appendChild(mapContainer);
+    
+    // 确保目标元素填满父容器
+    targetElement.style.width = "100%";
+    targetElement.style.height = "100%";
+    targetElement.style.position = "relative";
+    targetElement.style.display = "block";
+    
+    // 调试信息
+    console.log("渲染迷雾地图", {
+        targetElement: targetElement.id,
+        parentContainer: parentContainer ? parentContainer.id : "未找到",
+        targetWidth: targetElement.offsetWidth,
+        targetHeight: targetElement.offsetHeight,
+        parentWidth: parentContainer ? parentContainer.offsetWidth : 0,
+        parentHeight: parentContainer ? parentContainer.offsetHeight : 0
+    });
 }
 
 /**
@@ -142,7 +164,15 @@ function renderFogMap(targetElement) {
  */
 function initFogEffect() {
     console.log("迷雾效果模块初始化完成");
-    // 可以在这里添加初始化代码
+    
+    // 监听窗口大小变化，重新调整迷雾效果
+    window.addEventListener('resize', function() {
+        const gameMapEl = document.getElementById("game-map");
+        if (gameMapEl && gameMapEl.innerHTML.includes("map-container")) {
+            // 如果当前显示的是迷雾地图，重新渲染
+            renderFogMap(gameMapEl);
+        }
+    });
 }
 
 // 当页面加载完成后初始化

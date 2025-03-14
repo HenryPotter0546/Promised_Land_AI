@@ -108,7 +108,7 @@ body {
     height: 250px;
     border: 1px solid #ccc;
     border-radius: 4px;
-    padding: 15px;
+    padding: 0;
     background-color: #263238;
     color: #b2ff59;
     font-family: 'Courier New', monospace;
@@ -117,7 +117,7 @@ body {
 }
 
 #game-map {
-    display: inline-block;
+    display: block;
     text-align: center;
     width: 100%;
     height: 100%;

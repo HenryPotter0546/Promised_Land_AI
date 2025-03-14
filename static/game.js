@@ -58,11 +58,27 @@ function updateGameMap(mapData) {
     // 检查是否是动态迷雾地图
     if (mapData === "FOG_MAP_DYNAMIC_MARKER") {
         // 使用迷雾效果模块渲染迷雾地图
+        gameMapEl.innerHTML = ""; // 清空地图容器
         FogEffect.renderFogMap(gameMapEl);
+        
+        // 确保地图元素填满容器
+        gameMapEl.style.width = "100%";
+        gameMapEl.style.height = "100%";
+        gameMapEl.style.display = "block";
     } else {
         // 如果是普通ASCII地图，直接设置文本内容
+        gameMapEl.innerHTML = ""; // 清空地图容器
         gameMapEl.textContent = mapData;
     }
+    
+    // 调试信息
+    console.log("更新游戏地图", {
+        mapType: mapData === "FOG_MAP_DYNAMIC_MARKER" ? "迷雾地图" : "ASCII地图",
+        gameMapWidth: gameMapEl.offsetWidth,
+        gameMapHeight: gameMapEl.offsetHeight,
+        containerWidth: document.getElementById("game-map-container").offsetWidth,
+        containerHeight: document.getElementById("game-map-container").offsetHeight
+    });
 }
 
 ws.onopen = () => {
