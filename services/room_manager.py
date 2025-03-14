@@ -1,5 +1,5 @@
 import uuid
-from typing import Dict, Optional
+from typing import Dict, Optional, List
 from fastapi import WebSocket
 import asyncio
 from config.settings import Settings
@@ -25,11 +25,16 @@ class GameRoom:
         ]
         self.stage_cnt = len(self.game_stage) - 1
         
+        # 房间全局游戏状态（作为默认值和模板）
         self.game_state = {
             "story": [],
+            "init_scene": "你站在一个神秘洞穴的入口，周围是茂密的森林。洞穴深处传来微弱的光芒和神秘的声音。",
             "current_scene": "你站在一个神秘洞穴的入口，周围是茂密的森林。洞穴深处传来微弱的光芒和神秘的声音。",
             "current_stage": 0
         }
+        
+        # 每个玩家的独立游戏状态
+        self.player_states: Dict[str, dict] = {}
         
         # 初始化房间的地图
         asyncio.create_task(self._initialize_maps())
@@ -45,7 +50,7 @@ class GameRoom:
             # 构建提示
             prompt = f"""
 你是一个文字冒险游戏的地图设计师。请根据以下游戏阶段描述，创建一个ASCII地图。
-地图应该使用以下格式：
+地图参考下面这份地图：
 
   北
   ↑
@@ -83,8 +88,23 @@ ASCII地图：
                 print(f"为阶段 {stage} 生成地图成功")
             except Exception as e:
                 print(f"为阶段 {stage} 生成地图失败: {e}")
+                # 创建一个简单的默认地图
+                default_map = f"""
+  北
+  ↑
+[入口]━━━━━[中心区域🔴]━━━━━[出口]
+  │         │         │
+  │         │         │
+[左侧区域]━━[迷雾区域]━━[右侧区域]
+  │         │         │
+  │         │         │
+[秘密通道]━━[宝藏室]━━━[休息处]
+"""
                 # 使用默认地图
-                map_service.initialize_room_map(self.room_id, stage)
+                map_service.update_map_for_stage(self.room_id, stage, default_map)
+                print(f"为阶段 {stage} 使用默认地图")
+        
+        print(f"房间 {self.room_id} 的所有地图初始化完成")
     
     def _clean_generated_map(self, map_text: str) -> str:
         """清理生成的地图文本，移除可能的前缀和后缀"""
@@ -107,12 +127,25 @@ ASCII地图：
         
         player_id = str(uuid.uuid4())
         self.players[player_id] = websocket
+        
+        # 初始化玩家独立游戏状态
+        self.player_states[player_id] = {
+            "story": [],
+            "current_scene": self.game_state["init_scene"],
+            "current_stage": 0,  # 新玩家总是从第一个阶段开始
+            "joined_at_room_stage": self.game_state["current_stage"]  # 记录玩家加入时的房间阶段
+        }
+        
         return player_id
 
     async def disconnect(self, player_id: str):
         """移除玩家"""
         if player_id in self.players:
             del self.players[player_id]
+            
+            # 清理玩家状态
+            if player_id in self.player_states:
+                del self.player_states[player_id]
 
     async def broadcast(self, message: dict):
         """向房间内所有玩家广播消息"""
@@ -123,14 +156,42 @@ ASCII地图：
         """获取当前房间玩家数量"""
         return len(self.players)
 
-    def update_game_state(self, new_state: dict):
-        """更新游戏状态"""
-        self.game_state.update(new_state)
+    def update_player_state(self, player_id: str, new_state: dict) -> bool:
+        """更新玩家的游戏状态"""
+        if player_id in self.player_states:
+            self.player_states[player_id].update(new_state)
+            return True
+        return False
+    
+    def update_player_stage(self, player_id: str, stage: int) -> bool:
+        """更新玩家的游戏阶段"""
+        if player_id in self.player_states and 0 <= stage <= self.stage_cnt:
+            self.player_states[player_id]["current_stage"] = stage
+            return True
+        return False
+    
+    def get_player_state(self, player_id: str) -> dict:
+        """获取玩家的游戏状态"""
+        return self.player_states.get(player_id, self.game_state.copy())
+    
+    def get_player_stage(self, player_id: str) -> int:
+        """获取玩家的当前游戏阶段"""
+        if player_id in self.player_states:
+            return self.player_states[player_id]["current_stage"]
+        return 0  # 默认返回第一个阶段
+    
+    def get_player_scene(self, player_id: str) -> str:
+        """获取玩家的当前场景描述"""
+        if player_id in self.player_states:
+            return self.player_states[player_id]["current_scene"]
+        return self.game_state["init_scene"]  # 默认返回初始场景
 
 class RoomManager:
     def __init__(self):
         self.rooms: Dict[str, GameRoom] = {}
         self.lock = asyncio.Lock()
+        # 玩家ID到房间ID的映射，方便查找玩家所在的房间
+        self.player_room_map: Dict[str, str] = {}
 
     async def get_or_create_room(self) -> GameRoom:
         print("trying get or create room")
@@ -146,19 +207,57 @@ class RoomManager:
             room_id = str(uuid.uuid4())[:8]
             new_room = GameRoom(room_id)
             self.rooms[room_id] = new_room
-            print("room manager created new room")
+            print(f"创建新房间 {room_id}")
             return new_room
 
     def get_room(self, room_id: str) -> Optional[GameRoom]:
         """获取指定房间"""
         return self.rooms.get(room_id)
+    
+    def get_player_room(self, player_id: str) -> Optional[GameRoom]:
+        """获取玩家所在的房间"""
+        room_id = self.player_room_map.get(player_id)
+        if room_id:
+            return self.get_room(room_id)
+        return None
 
     def remove_room(self, room_id: str):
         """删除空房间"""
         if room_id in self.rooms:
             room = self.rooms[room_id]
             if room.get_player_count() == 0:
+                # 清理玩家到房间的映射
+                for player_id, mapped_room_id in list(self.player_room_map.items()):
+                    if mapped_room_id == room_id:
+                        del self.player_room_map[player_id]
+                
                 del self.rooms[room_id]
+                print(f"删除空房间 {room_id}")
+    
+    async def join_room(self, room_id: str, websocket: WebSocket) -> tuple:
+        """加入指定房间"""
+        room = self.get_room(room_id)
+        if not room:
+            raise ValueError(f"房间 {room_id} 不存在")
+        
+        player_id = await room.connect(websocket)
+        self.player_room_map[player_id] = room_id
+        
+        return room, player_id
+    
+    async def leave_room(self, player_id: str):
+        """离开房间"""
+        room = self.get_player_room(player_id)
+        if room:
+            await room.disconnect(player_id)
+            
+            # 如果房间空了，删除房间
+            if room.get_player_count() == 0:
+                self.remove_room(room.room_id)
+            
+            # 清理玩家到房间的映射
+            if player_id in self.player_room_map:
+                del self.player_room_map[player_id]
 
 # 全局房间管理器实例
 room_manager = RoomManager()

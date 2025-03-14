@@ -17,7 +17,7 @@ class MapService:
         return "FOG_MAP_DYNAMIC_MARKER"
     
     def get_map_for_room(self, room_id: str) -> str:
-        """获取房间的地图"""
+        """获取房间的地图（基于房间的全局游戏阶段）"""
         # 如果房间没有地图，返回动态生成的迷雾地图
         if room_id not in self.room_maps:
             return self._generate_fog_map()
@@ -38,6 +38,41 @@ class MapService:
         base_map = self.room_maps[room_id][current_stage]
         
         # 添加玩家位置标记
+        if room_id in self.player_positions:
+            # 将地图转换为行列表
+            map_lines = base_map.split('\n')
+            
+            # 为每个玩家添加标记
+            for player_id, position in self.player_positions[room_id].items():
+                x, y = position.get('x', 0), position.get('y', 0)
+                
+                # 确保坐标在有效范围内
+                if 0 <= y < len(map_lines) and 0 <= x < len(map_lines[y]):
+                    # 替换字符
+                    line = map_lines[y]
+                    map_lines[y] = line[:x] + '@' + line[x+1:]
+            
+            # 重新组合地图
+            return '\n'.join(map_lines)
+        
+        return base_map
+    
+    def get_map_for_stage(self, room_id: str, stage: int) -> str:
+        """获取房间特定阶段的地图（用于玩家独立游戏状态）"""
+        # 如果房间没有地图，返回默认地图
+        if room_id not in self.room_maps:
+            print(f"房间 {room_id} 没有地图，返回默认地图")
+            return self.default_map
+        
+        # 获取指定阶段的地图
+        if stage not in self.room_maps[room_id]:
+            print(f"房间 {room_id} 的阶段 {stage} 没有地图，返回默认地图")
+            return self.default_map
+            
+        # 获取基础地图
+        base_map = self.room_maps[room_id][stage]
+        
+        # 添加玩家位置标记（这里可以根据需要修改，为每个玩家提供独立的位置标记）
         if room_id in self.player_positions:
             # 将地图转换为行列表
             map_lines = base_map.split('\n')
@@ -100,15 +135,20 @@ class MapService:
             del self.player_positions[room_id][player_id]
     
     def initialize_room_map(self, room_id: str, stage: int):
-        """根据游戏阶段初始化房间地图"""
+        """根据游戏阶段初始化房间地图（仅在房间创建时调用）"""
+        print(f"警告：尝试在游戏过程中初始化地图 (房间: {room_id}, 阶段: {stage})，这不应该发生")
         # 确保房间有地图字典
         if room_id not in self.room_maps:
             self.room_maps[room_id] = {}
         
-        # 为指定阶段设置迷雾地图
-        fog_map = self._generate_fog_map()
-        self.room_maps[room_id][stage] = fog_map
-        return fog_map
+        # 检查是否已经有该阶段的地图
+        if stage in self.room_maps[room_id]:
+            return self.room_maps[room_id][stage]
+        
+        # 返回默认地图
+        print(f"为房间 {room_id} 的阶段 {stage} 使用默认地图")
+        self.room_maps[room_id][stage] = self.default_map
+        return self.default_map
 
 # 全局地图服务实例
 map_service = MapService() 
