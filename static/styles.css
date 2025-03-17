@@ -66,28 +66,10 @@ body {
     border-radius: 4px;
     padding: 15px;
     background-color: #fff;
-    height: 300px;
-    max-height: 300px;
-    overflow-y: auto;
+    height: 400px;
+    max-height: 400px;
+    overflow-y: scroll;
     margin-bottom: 10px;
-    scrollbar-width: thin;
-    scrollbar-color: #ccc #f0f0f0;
-}
-
-/* 为Webkit浏览器（Chrome、Safari等）自定义滚动条样式 */
-#personal-story::-webkit-scrollbar {
-    width: 8px;
-}
-
-#personal-story::-webkit-scrollbar-track {
-    background: #f0f0f0;
-    border-radius: 4px;
-}
-
-#personal-story::-webkit-scrollbar-thumb {
-    background-color: #ccc;
-    border-radius: 4px;
-    border: 2px solid #f0f0f0;
 }
 
 /* 输入区域 */
@@ -119,7 +101,7 @@ body {
     border-radius: 4px;
     padding: 15px;
     background-color: #fff8e1;
-    overflow-y: auto;
+    overflow-y: scroll;
     margin-bottom: 15px;
 }
 

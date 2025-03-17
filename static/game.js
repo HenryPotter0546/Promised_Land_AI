@@ -21,7 +21,6 @@ function addPersonalMessage(text, type) {
     p.textContent = text;
     p.className = `message ${type}-message`;
     personalStoryDiv.appendChild(p);
-    // 滚轮自动滚到底部
     personalStoryDiv.scrollTop = personalStoryDiv.scrollHeight;
 }
 
@@ -31,7 +30,6 @@ function addWorldMessage(text, type) {
     p.textContent = text;
     p.className = `message ${type}-message`;
     worldInfoDiv.appendChild(p);
-    // 滚轮自动滚到底部
     worldInfoDiv.scrollTop = worldInfoDiv.scrollHeight;
 }
 
