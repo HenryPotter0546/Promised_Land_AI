@@ -36,7 +36,11 @@ class GameRoom:
         # 每个玩家的独立游戏状态
         self.player_states: Dict[str, dict] = {}
         
-        # 初始化房间的地图
+        # 初始化房间的地图 - 使用默认地图作为占位符
+        for stage in range(len(self.game_stage)):
+            map_service.update_map_for_stage(self.room_id, stage, map_service.default_map)
+        
+        # 异步初始化详细地图
         asyncio.create_task(self._initialize_maps())
     
     async def _initialize_maps(self):
@@ -69,14 +73,14 @@ class GameRoom:
 1. 使用方括号[]表示地点
 2. 使用═、║、╫等符号表示路径和连接
 3. 使用🔴标记玩家当前位置
-4. 地图应该反映游戏阶段的场景和环境
+4. 地图不能不能照搬上面的例子，地图应该反映游戏阶段的场景和环境
 5. 只返回ASCII地图，不要有其他解释
-
 ASCII地图：
 """
             
             # 调用AI服务生成地图
             try:
+                print(f"正在为房间 {self.room_id} 的阶段 {stage} 生成地图...")
                 generated_map = await ai_service.generate_response(f"生成游戏地图-阶段{stage}", stage_description, prompt)
                 print(f"为阶段 {stage} 生成的地图: {generated_map}")
                 
@@ -86,6 +90,20 @@ ASCII地图：
                 # 保存生成的地图
                 map_service.update_map_for_stage(self.room_id, stage, generated_map)
                 print(f"为阶段 {stage} 生成地图成功")
+                
+                # 如果是第0阶段的地图，并且有玩家在这个阶段，通知他们地图已更新
+                if stage == 0 and self.players:
+                    for player_id, ws in self.players.items():
+                        player_stage = self.get_player_stage(player_id)
+                        if player_stage == 0:
+                            print(f"通知玩家 {player_id} 阶段 {stage} 的地图已更新")
+                            try:
+                                await ws.send_json({
+                                    "type": "game_map",
+                                    "content": generated_map
+                                })
+                            except Exception as e:
+                                print(f"通知玩家 {player_id} 地图更新失败: {e}")
             except Exception as e:
                 print(f"为阶段 {stage} 生成地图失败: {e}")
                 # 创建一个简单的默认地图
@@ -120,11 +138,12 @@ ASCII地图：
         return map_text
 
     async def connect(self, websocket: WebSocket) -> str:
-        """添加新玩家到房间"""
+        """根据websocket的实例，把添加玩家到房间"""
         print("room.connect")
         if len(self.players) >= settings.max_players_per_room:
             raise ValueError("房间已满")
         
+        #TODO 之后要把player_id跟账户、密码绑定
         player_id = str(uuid.uuid4())
         self.players[player_id] = websocket
         
@@ -133,7 +152,6 @@ ASCII地图：
             "story": [],
             "current_scene": self.game_state["init_scene"],
             "current_stage": 0,  # 新玩家总是从第一个阶段开始
-            "joined_at_room_stage": self.game_state["current_stage"]  # 记录玩家加入时的房间阶段
         }
         
         return player_id
@@ -176,15 +194,11 @@ ASCII地图：
     
     def get_player_stage(self, player_id: str) -> int:
         """获取玩家的当前游戏阶段"""
-        if player_id in self.player_states:
-            return self.player_states[player_id]["current_stage"]
-        return 0  # 默认返回第一个阶段
+        return self.player_states[player_id]["current_stage"]
     
     def get_player_scene(self, player_id: str) -> str:
-        """获取玩家的当前场景描述"""
-        if player_id in self.player_states:
-            return self.player_states[player_id]["current_scene"]
-        return self.game_state["init_scene"]  # 默认返回初始场景
+        """获取玩家的当前场景描述，不同玩家的场景是独立的"""
+        return self.player_states[player_id]["current_scene"]
 
 class RoomManager:
     def __init__(self):
@@ -199,8 +213,8 @@ class RoomManager:
         async with self.lock:
             # 查找未满的房间
             for room in self.rooms.values():
-                print("room manager get avail room")
                 if room.get_player_count() < settings.max_players_per_room:
+                    print("存在未满房间：", room.room_id, "玩家数量：", room.get_player_count())
                     return room
             
             # 如果没有可用房间，创建新房间

@@ -62,15 +62,25 @@ class MapService:
         # 如果房间没有地图，返回默认地图
         if room_id not in self.room_maps:
             print(f"房间 {room_id} 没有地图，返回默认地图")
+            self.room_maps[room_id] = {}
+            for i in range(7):  # 假设最多7个阶段
+                self.room_maps[room_id][i] = self.default_map
             return self.default_map
         
         # 获取指定阶段的地图
         if stage not in self.room_maps[room_id]:
             print(f"房间 {room_id} 的阶段 {stage} 没有地图，返回默认地图")
+            self.room_maps[room_id][stage] = self.default_map
             return self.default_map
             
         # 获取基础地图
         base_map = self.room_maps[room_id][stage]
+        
+        # 如果地图是默认的迷雾地图，打印日志
+        if base_map == self.default_map:
+            print(f"房间 {room_id} 的阶段 {stage} 使用的是默认迷雾地图，可能地图尚未生成完成")
+        else:
+            print(f"房间 {room_id} 的阶段 {stage} 使用的是已生成的地图")
         
         # 添加玩家位置标记（这里可以根据需要修改，为每个玩家提供独立的位置标记）
         if room_id in self.player_positions:
@@ -118,9 +128,21 @@ class MapService:
         # 确保房间有地图字典
         if room_id not in self.room_maps:
             self.room_maps[room_id] = {}
+            print(f"为房间 {room_id} 创建地图字典")
+        
+        # 检查是否是从默认地图更新为生成地图
+        is_updating_from_default = False
+        if stage in self.room_maps[room_id] and self.room_maps[room_id][stage] == self.default_map and new_map != self.default_map:
+            is_updating_from_default = True
+            print(f"房间 {room_id} 的阶段 {stage} 地图从默认迷雾地图更新为生成地图")
         
         # 更新指定阶段的地图
         self.room_maps[room_id][stage] = new_map
+        
+        if is_updating_from_default:
+            print(f"房间 {room_id} 的阶段 {stage} 地图已成功更新")
+        else:
+            print(f"房间 {room_id} 的阶段 {stage} 地图已设置")
     
     def update_player_position(self, room_id: str, player_id: str, x: int, y: int):
         """更新玩家在地图上的位置"""

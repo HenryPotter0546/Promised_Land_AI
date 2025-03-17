@@ -12,6 +12,8 @@ async def handle_websocket(websocket: WebSocket):
     await websocket.accept()
     
     try:
+        #TODO 现在是先有房间再有id，之后得要先登录获取id，之后再有房间
+
         # 获取或创建房间
         room = await room_manager.get_or_create_room()
         # 连接到房间
@@ -27,7 +29,8 @@ async def handle_websocket(websocket: WebSocket):
             "players": players_dict
         })
         
-        # 发送玩家状态
+        # 发送玩家的初始状态
+        #TODO 玩家可能进房间之前是带着天赋的
         player_status_html = llm_db_service.get_player_status_html(player_id)
         await websocket.send_json({
             "type": "player_status",
@@ -44,7 +47,7 @@ async def handle_websocket(websocket: WebSocket):
         # 获取并发送玩家当前阶段的游戏地图（每个玩家都从第一阶段开始）
         player_stage = room.get_player_stage(player_id)
         game_map = map_service.get_map_for_stage(room.room_id, player_stage)
-        print(f"发送玩家 {player_id} 的地图数据: 阶段 {player_stage}")
+        print(f"发送玩家 {player_id} 的地图数据: 阶段 {player_stage}, 地图类型: {'迷雾地图' if game_map == map_service.default_map else '生成地图'}")
         await websocket.send_json({
             "type": "game_map",
             "content": game_map
@@ -118,7 +121,7 @@ async def handle_websocket(websocket: WebSocket):
                         # 如果玩家阶段变化，发送对应阶段的地图
                         if old_stage != player_stage:
                             game_map = map_service.get_map_for_stage(room.room_id, player_stage)
-                            print(f"玩家 {player_id} 阶段变化: {old_stage} -> {player_stage}, 发送阶段 {player_stage} 的地图")
+                            print(f"玩家 {player_id} 阶段变化: {old_stage} -> {player_stage}, 发送阶段 {player_stage} 的地图, 地图类型: {'迷雾地图' if game_map == map_service.default_map else '生成地图'}")
                             await websocket.send_json({
                                 "type": "game_map",
                                 "content": game_map
