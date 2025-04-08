@@ -4,6 +4,7 @@ from typing import Dict, List, Any, Optional, Tuple
 from services.db_service import db_service
 from services.ai_service import ai_service
 from services.map_service import map_service
+from services.story_rag_service import story_rag_service
 
 class LLMDatabaseService:
     def __init__(self):
@@ -25,27 +26,32 @@ class LLMDatabaseService:
             player_name = f"玩家{player_id[:6]}"
             player_data = self.db.create_player(player_id, player_name)
         
-        # 构建提示，包含玩家状态和天赋信息
-        prompt = self._build_prompt(player_data, user_action, context, room_id, stage_hint)
+        # 获取玩家当前阶段
+        player_stage = 0
+        if "current_stage" in player_data:
+            player_stage = player_data["current_stage"]
+        
+        # 使用RAG服务获取相关的剧情背景信息
+        print(f"正在为玩家 {player_id} 使用RAG服务查找相关剧情...")
+        rag_context = story_rag_service.get_rag_context(user_action, player_stage)
+        
+        # 构建提示，包含玩家状态和天赋信息以及RAG上下文
+        prompt = self._build_prompt(player_data, user_action, context, room_id, stage_hint, rag_context)
         
         # 调用AI服务获取响应
         ai_response = await ai_service.generate_response(stage_hint, context, prompt)
 
-        # print(f"before parse ai_response: {ai_response}")
+        print(f"AI生成响应（带RAG增强）: {ai_response[:100]}...")
         
         # 解析AI响应中的数据库操作指令
         updated_data = self._parse_db_operations(ai_response, player_id)
-
-        # print(f"after parse ai_response: {ai_response}")
         
         # 清理AI响应，移除数据库操作指令
         cleaned_response = self._clean_response(ai_response)
-
-        # print(f"cleaned_response: {cleaned_response}")
         
         return cleaned_response, updated_data
     
-    def _build_prompt(self, player_data: Dict, user_action: str, context: str, room_id: str, stage_hint: str) -> str:
+    def _build_prompt(self, player_data: Dict, user_action: str, context: str, room_id: str, stage_hint: str, rag_context: str = "") -> str:
         """构建包含玩家数据的提示"""
         # 提取玩家基本信息
         player_info = {
@@ -118,6 +124,16 @@ class LLMDatabaseService:
 {current_map}
 ```
 
+"""
+
+        # 添加RAG上下文（如果有）
+        if rag_context:
+            prompt += f"""
+相关游戏背景知识:
+{rag_context}
+"""
+
+        prompt += f"""
 玩家行动:
 {user_action}
 
@@ -137,6 +153,7 @@ class LLMDatabaseService:
 4. 如果玩家获得物品，增加相应的物品
 5. 不要在响应中包含数据库操作的指令，这些指令会被自动处理
 6. 地图是固定的，不需要也不能更新地图
+7. 利用提供的相关游戏背景知识，使描述更加生动和连贯，与整体世界观保持一致
 
 AI响应:
 """

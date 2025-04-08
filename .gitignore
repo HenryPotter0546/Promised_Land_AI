@@ -3,3 +3,4 @@ readme.md
 requirements.txt
 .env
 game_data.db
+main.py
