@@ -2,7 +2,7 @@ from pydantic_settings import BaseSettings
 from typing import Dict, Any
 
 class Settings(BaseSettings):
-    deepseek_api_key: str = 'sk-3152b38d194b41549625f0470e1f3f6b'
+    deepseek_api_key: str = 'your_deepeek_api_key'
     max_players_per_room: int = 4
     ai_max_tokens: int = 600
     ai_temperature: float = 0.7
